@@ -1,74 +1,85 @@
 <!DOCTYPE html>
 <html lang="ja">
 
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <title>をしゅないず🍑</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+    <script src="https://obniz.io/js/jquery-3.2.1.min.js"></script>
+    <script src="https://unpkg.com/obniz@latest/obniz.js"></script>
 
-<div class="container">
-    <div class="row py-5">
+    <div class="container">
+      <div class="row py-5">
         <div class="col">
-            <button id="start-btn" type="button" class="btn btn-primary btn-lg mx-auto d-block" data_but="btn-xs"><i class='fa '></i>🍑</button>
+          <button id="start-btn" type="button" class="btn btn-primary btn-lg mx-auto d-block" data_but="btn-xs"><i class='fa '></i>🍑</button>
         </div>
+      </div>
+      <div id="result-div" class="h1 text-center py-5"></div>
     </div>
-    <div id="result-div" class="h1 text-center py-5"></div>
-</div>
-<script>
 
-  function L_chica( ) {
-      var obniz = new Obniz("OBNIZ_ID_HERE");
+    <script>
+      var obniz = new Obniz("7356-6823");
       obniz.onconnect = async function () {
           var led = obniz.wired("LED", {anode:0, cathode:1});
-          led.on();
-      }
-  }
 
-  var music = new Audio('昇竜拳.wav');
-  const startBtn = document.querySelector('#start-btn');
-  const stopBtn = document.querySelector('#stop-btn');
-  const resultDiv = document.querySelector('#result-div');
+          const startBtn = document.querySelector('#start-btn');
+          const stopBtn = document.querySelector('#stop-btn');
+          const resultDiv = document.querySelector('#result-div');
 
-  SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
-  let recognition = new SpeechRecognition();
+          SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
+          let recognition = new SpeechRecognition();
 
-  recognition.lang = 'ja-JP';
-  recognition.interimResults = true;
-  recognition.continuous = true;
+          recognition.lang = 'ja-JP';
+          recognition.interimResults = true;
+          recognition.continuous = true;
 
-  let finalTranscript = ''; // 確定した(黒の)認識結果
+          let finalTranscript = ''; // 確定した(黒の)認識結果
+          let garbage_var = '';
 
-  recognition.onresult = (event) => {
-      let interimTranscript = ''; // 暫定(灰色)の認識結果
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-          let transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-              finalTranscript += transcript;
-          } else {
-              interimTranscript = transcript;
+          recognition.onresult = (event) => {
+              let interimTranscript = ''; // 暫定(灰色)の認識結果
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                  let transcript = event.results[i][0].transcript;
+                  if (event.results[i].isFinal) {
+                      finalTranscript += transcript;
+                  } else {
+                      interimTranscript = transcript;
+                  }
+              }
+
+              if (garbage_var == interimTranscript.slice(-2)){
+              }
+              else {
+                  console.log(interimTranscript.slice(-2));
+                  if (interimTranscript.slice(-2)=="お尻"){
+                      const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
+                      (async () => {
+                          led.on();
+                          await sleep(500);
+                          led.off();
+                      })();
+                  }
+                  resultDiv.innerHTML = interimTranscript + '</i>';
+              }
+              garbage_var = interimTranscript.slice(-2);
+          }
+
+          startBtn.onclick = () => {
+              recognition.start();
+          }
+          stopBtn.onclick = () => {
+              recognition.stop();
+              music.pause();
           }
       }
-      if (interimTranscript.slice(-2)=="お尻"){
-          /music.play();/
-          L_chica();
-      }
-      resultDiv.innerHTML = interimTranscript + '</i>';
-  }
+      </script>
 
-  startBtn.onclick = () => {
-      recognition.start();
-  }
-  stopBtn.onclick = () => {
-      recognition.stop();
-      music.pause();
-    }
-</script>
-</body>
+  </body>
 </html>
