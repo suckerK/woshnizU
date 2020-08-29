@@ -1,0 +1,215 @@
+<!-- HTML Example -->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <title>をしゅないず🍑</title>
+  </head>
+
+  <body>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+    <script src="https://obniz.io/js/jquery-3.2.1.min.js"></script>
+    <script src="https://unpkg.com/obniz@latest/obniz.js"></script>
+
+
+    <div id="obniz-debug"></div>
+    <h1>obniz センサー</h1>
+
+    <div class="container">
+      <div class="row py-5">
+        <div class="col">
+          <button id="start-btn" type="button" class="btn btn-primary btn-lg mx-auto d-block" data_but="btn-xs"><i class='fa '></i>桃</button>
+        </div>
+      </div>
+      <div id="result-div" class="h1 text-center py-5"></div>
+    </div>
+
+    <!-- ウォシュレット制御用赤外線信号のロード -->
+    <script type="text/javascript" src="/Users/sakasaikeisuke/Desktop/woshniz_val_final_2.js"></script>
+    <script>
+      var obnizA = new Obniz("7356-6823");
+
+      /* -- システム落ちたらウォシュレット OFF
+       obnizA.onclose = async function() {
+       console.log('stop!');
+       led.send(val_stop);
+       //await obnizA.wait(sleep);
+       }
+      */
+
+      /* -- メイン関数  -- */
+      obnizA.onconnect = async function () {   // A : 赤外線送信機
+          var obnizB = new Obniz("5388-8003"); // B : ジョイスティック
+          obnizB.onconnect = async function() {
+              //-- 外部モジュール接続
+              var led = obnizA.wired('InfraredLED', {anode: 0, cathode: 1});
+              var joystick = obnizB.wired("JoyStick", { gnd: 0, vcc: 1, y: 2, x: 3, sw: 4});
+
+              var sleep = 1000;
+              var cnt_xp = 0;
+              var cnt_xm = 0;
+              var cnt_yp = 0;
+              var cnt_ym = 0;
+              var cnt_lim_p = 5;
+              var cnt_lim_m = 1;
+
+              //**-- X 軸：水圧
+              joystick.onchangex = async function (val) {
+
+                  // -- 水圧大きくする
+                  if (0.3 <= val && val <= 0.5){
+                      cnt_xp = cnt_xp + 1;
+                      if (cnt_xp <= cnt_lim_p){
+                          console.log("X_p");
+                      }
+                      else {
+                          led.send(val_plus);
+                          obnizA.display.clear();
+                          obnizA.display.print("X_p");
+                          obnizB.display.clear();
+                          obnizB.display.print("X_p");
+                          console.log("X_p");
+                          cnt_xp = 0;
+                      };
+                      //await obnizA.wait(sleep);
+                  };
+
+                  // -- 水圧小さくする
+                  if (-0.5 < val && val < -0.3){
+                      cnt_xm = cnt_xm + 1;
+                      if (cnt_xm <= cnt_lim_m){
+                          console.log("X_m");
+                      }
+                      else {
+                          led.send(val_minus);
+                          obnizA.display.clear();
+                          obnizA.display.print("X_m");
+                          obnizB.display.clear();
+                          obnizB.display.print("X_m");
+                          console.log("X_m");
+                          cnt_xm = 0;
+                      };
+                      //await obnizA.wait(sleep);
+                  };
+
+                  // -- プッシュして流す
+                  if (0.8 < val) {
+                      console.log("Push...!!");
+                      obnizA.display.clear();
+                      obnizA.display.print("Push...!!");
+                      obnizB.display.clear();
+                      obnizB.display.print("Push...!!");
+                      led.send(val_small);
+                      //await obnizA.wait(sleep);
+                  };
+              };
+
+              //**-- Y 軸：ノズルアライメント設定
+              joystick.onchangey = async function (val) {
+
+                  // -- 前方向のムーブ
+                  if (0.3 < val && val < 0.5){
+                      cnt_yp = cnt_yp + 1;
+                      if (cnt_yp <= cnt_lim_p){
+                          console.log("Y_p");
+                      }
+                      else {
+                          led.send(val_front);
+                          obnizA.display.clear();
+                          obnizA.display.print("Y_p");
+                          obnizB.display.clear();
+                          obnizB.display.print("Y_p");
+                          console.log("Y_p");
+                          cnt_yp = 0;
+                      };
+                      //await obnizA.wait(sleep);
+                  };
+
+                  // -- 後ろ方向のムーブ
+                  if (-0.5 < val && val < -0.3){
+                      cnt_ym = cnt_ym + 1;
+                      if (cnt_ym <= cnt_lim_m){
+                          console.log("Y_m");
+                      }
+                      else {
+                          led.send(val_back);
+                          obnizA.display.clear();
+                          obnizA.display.print("Y_m");
+                          obnizB.display.clear();
+                          obnizB.display.print("Y_m");
+                          console.log("Y_m");
+                          cnt_ym = 0;
+                      };
+                      //await obnizA.wait(sleep);
+                  };
+              };
+
+              //**-- Speech to Text
+              const startBtn = document.querySelector('#start-btn');
+              SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
+              let recognition = new SpeechRecognition();
+
+              recognition.lang = 'ja-JP';
+              recognition.interimResults = true;
+              recognition.continuous = true;
+
+              let finalTranscript = ''; // 確定した(黒の)認識結果
+              let garbage_var = '';
+
+              recognition.onresult = (event) => {
+                  let interimTranscript = ''; // 暫定(灰色)の認識結果
+                  for (let i = event.resultIndex; i < event.results.length; i++) {
+                      let transcript = event.results[i][0].transcript;
+                      if (event.results[i].isFinal) {
+                          finalTranscript += transcript;
+                      } else {
+                          interimTranscript = transcript;
+                      }
+                  }
+
+                  if (garbage_var == interimTranscript.slice(-2)){
+                  }
+                  else {
+                      console.log(interimTranscript.slice(-2));
+                      //  お尻と認識すると、ウォシュレットの「おしり」機能がトリガ
+                      if (interimTranscript.slice(-2)=="お尻"){
+                          const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
+                          (async () => {
+                              console.log('said_hip');
+                              obnizA.display.clear();
+                              obnizA.display.print("said_hip");
+                              obnizB.display.clear();
+                              obnizB.display.print("said_hip");
+                              led.send(val_hip);
+                              //await obnizA.wait(sleep);
+                          })();
+                      }
+                      // よしと認識すると、ウォシュレットの「おしり」機能が終了
+                      if (interimTranscript.slice(-2)=="よし"){
+                          const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
+                          (async () => {
+                              console.log('stop!');
+                              obnizA.display.clear();
+                              obnizA.display.print("stop!!");
+                              obnizB.display.clear();
+                              obnizB.display.print("stop!!");
+                              led.send(val_stop);
+                              //await obnizA.wait(sleep);
+                          })();
+                      }
+
+                      // resultDiv.innerHTML = interimTranscript + '</i>';
+                  }
+                  garbage_var = interimTranscript.slice(-2);
+              }
+              startBtn.onclick = () => {
+                  recognition.start();
+              }
+          }
+      }
+      </script>
+  </body>
+</html>
